@@ -1,0 +1,318 @@
+[
+    {
+        "id": "7927ba4c.375fc4",
+        "type": "comment",
+        "z": "c22dac8a.79182",
+        "name": "Article 3 Project Flow",
+        "info": "The flows created below are for the Article 3. Please note that this is to add some additional features to the project we created during the part 2 of this article series. \n\n",
+        "x": 200,
+        "y": 420,
+        "wires": []
+    },
+    {
+        "id": "396a35c6.d8ce1a",
+        "type": "mqtt in",
+        "z": "c22dac8a.79182",
+        "name": "Capture Sensor Data",
+        "topic": "monitor/#",
+        "qos": "0",
+        "datatype": "auto",
+        "broker": "49ef5b47.fad554",
+        "x": 200,
+        "y": 520,
+        "wires": [
+            [
+                "a5e3e72f.c13fc8"
+            ]
+        ]
+    },
+    {
+        "id": "a5e3e72f.c13fc8",
+        "type": "function",
+        "z": "c22dac8a.79182",
+        "name": "Format Sensor Data",
+        "func": "var topic = msg.topic;\nvar payload = msg.payload;\n\nvar time = Math.floor(Date.now() / 1000);\n\nvar query = \"INSERT INTO SensorData (Topic,Payload,Timestamp) VALUES ('\" + escape(topic) + \"','\" + escape(payload.trim()) + \"','\" + escape(time) + \"')\";\n\nmsg.topic = query;\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 440,
+        "y": 520,
+        "wires": [
+            [
+                "cf92cca6.670d7"
+            ]
+        ]
+    },
+    {
+        "id": "cf92cca6.670d7",
+        "type": "mysql",
+        "z": "c22dac8a.79182",
+        "mydb": "412ae35a.cc247c",
+        "name": "Store data into DB",
+        "x": 670,
+        "y": 520,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "219feb97.919b14",
+        "type": "comment",
+        "z": "c22dac8a.79182",
+        "name": "1. Database Functionality",
+        "info": "The flow below adds database storage capabilities to our project, allowing us to store the sensor data sent be our Node MCU device. \n",
+        "x": 210,
+        "y": 480,
+        "wires": []
+    },
+    {
+        "id": "b1cf53f1.2103a",
+        "type": "comment",
+        "z": "c22dac8a.79182",
+        "name": "2. REST API Functionality",
+        "info": "The flow below adds 2 REST APIs which let's the user fetch the 'N' latest sensor values by triggering a HTTP Request on a specific address.\nThe testing for this is done using an application called **\"Postman\"**.",
+        "x": 210,
+        "y": 580,
+        "wires": []
+    },
+    {
+        "id": "1ef9fcd6.514283",
+        "type": "http in",
+        "z": "c22dac8a.79182",
+        "name": "Sensor Data API",
+        "url": "/getsensordata",
+        "method": "post",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 180,
+        "y": 620,
+        "wires": [
+            [
+                "89591edc.957ac"
+            ]
+        ]
+    },
+    {
+        "id": "369ec7f8.9a0098",
+        "type": "http response",
+        "z": "c22dac8a.79182",
+        "name": "Response",
+        "statusCode": "",
+        "headers": {},
+        "x": 780,
+        "y": 620,
+        "wires": []
+    },
+    {
+        "id": "b0256130.d476f",
+        "type": "mysql",
+        "z": "c22dac8a.79182",
+        "mydb": "412ae35a.cc247c",
+        "name": "Fetch Data",
+        "x": 630,
+        "y": 620,
+        "wires": [
+            [
+                "369ec7f8.9a0098"
+            ]
+        ]
+    },
+    {
+        "id": "89591edc.957ac",
+        "type": "function",
+        "z": "c22dac8a.79182",
+        "name": "Format and Create SQL Query",
+        "func": "// Fetch all the arguments of the api\nvar which_data = msg.payload.type;\nvar N = msg.payload.N;\nvar query = \"\";\n\n// Logic to select what type of sensor data do we want to fetch.\nif(which_data == 'temperature')\n{\n    query = \"SELECT Payload FROM SensorData WHERE Topic = 'monitor/temperature' ORDER BY Timestamp DESC LIMIT \" + escape(N) + \"\";\n}\n\nelse if(which_data == 'humidity')\n{\n    query = \"SELECT Payload FROM SensorData WHERE Topic = 'monitor/humidity' ORDER BY Timestamp DESC LIMIT \" + escape(N) + \"\";\n}\n\n// msg.topic variable set to the SQL query.\nmsg.topic = query;\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 410,
+        "y": 620,
+        "wires": [
+            [
+                "b0256130.d476f"
+            ]
+        ]
+    },
+    {
+        "id": "b1dbbc35.4e21c",
+        "type": "comment",
+        "z": "c22dac8a.79182",
+        "name": "3. Email Alerts Functionality",
+        "info": "This section has a flow which has the capability to send Email alerts to a specified Email ID. It can be generalized by adding an API to send the Email ID you want to send the alerts too. \nBut for this tutorial, we will be using a defined Email ID as the purpose of this Article is to show you how it works. ",
+        "x": 220,
+        "y": 680,
+        "wires": []
+    },
+    {
+        "id": "93b0e370.de21a",
+        "type": "mqtt in",
+        "z": "c22dac8a.79182",
+        "name": "Temperature",
+        "topic": "monitor/temperature",
+        "qos": "0",
+        "datatype": "auto",
+        "broker": "65fbb872.b0f098",
+        "x": 170,
+        "y": 720,
+        "wires": [
+            [
+                "47f13421.a26c0c"
+            ]
+        ]
+    },
+    {
+        "id": "47f13421.a26c0c",
+        "type": "function",
+        "z": "c22dac8a.79182",
+        "name": "Logic Function",
+        "func": "// Condition for Temperature value (greater than 20 degrees for this case)\nif(msg.payload > 20)\n{\n    // Define the mail subject and content\n    // 1. Subject\n    msg.topic = \"High Temperature Alert!\"\n    \n    // 2. Content\n    msg.payload = \"The temperature of the room is above 20 degrees.\"\n    \n}\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 340,
+        "y": 720,
+        "wires": [
+            [
+                "677475b2.692cbc"
+            ]
+        ]
+    },
+    {
+        "id": "677475b2.692cbc",
+        "type": "e-mail",
+        "z": "c22dac8a.79182",
+        "server": "smtp.gmail.com",
+        "port": "465",
+        "secure": true,
+        "tls": false,
+        "name": "",
+        "dname": "Send Email",
+        "x": 510,
+        "y": 720,
+        "wires": []
+    },
+    {
+        "id": "7af7394b.883ac8",
+        "type": "comment",
+        "z": "c22dac8a.79182",
+        "name": "4. SMS Alert Functionality",
+        "info": "This section has a flow which has the capability to send SMS alerts to a particular number.",
+        "x": 210,
+        "y": 780,
+        "wires": []
+    },
+    {
+        "id": "efce3542.325528",
+        "type": "mqtt in",
+        "z": "c22dac8a.79182",
+        "name": "Temperature",
+        "topic": "monitor/temperature",
+        "qos": "0",
+        "datatype": "auto",
+        "broker": "65fbb872.b0f098",
+        "x": 170,
+        "y": 820,
+        "wires": [
+            [
+                "227232f.3aa3dce"
+            ]
+        ]
+    },
+    {
+        "id": "227232f.3aa3dce",
+        "type": "function",
+        "z": "c22dac8a.79182",
+        "name": "Logic Function",
+        "func": "// Condition for Temperature value (greater than 20 degrees for this case)\nif(msg.payload > 20)\n{\n    // Define the mail subject and content\n    // 2. Content\n    msg.payload = \"The temperature of the room is above 20 degrees.\"\n    \n}\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "x": 340,
+        "y": 820,
+        "wires": [
+            [
+                "a290b85c.977518"
+            ]
+        ]
+    },
+    {
+        "id": "a290b85c.977518",
+        "type": "twilio out",
+        "z": "c22dac8a.79182",
+        "twilio": "f8525f7c.b8ec7",
+        "twilioType": "sms",
+        "url": "",
+        "number": "",
+        "name": "SMS Alert",
+        "x": 500,
+        "y": 820,
+        "wires": []
+    },
+    {
+        "id": "49ef5b47.fad554",
+        "type": "mqtt-broker",
+        "z": "",
+        "name": "mqtt broker ",
+        "broker": "",
+        "port": "1883",
+        "clientid": "",
+        "usetls": false,
+        "compatmode": false,
+        "keepalive": "300",
+        "cleansession": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthPayload": "",
+        "closeTopic": "",
+        "closeQos": "0",
+        "closePayload": "",
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": ""
+    },
+    {
+        "id": "412ae35a.cc247c",
+        "type": "MySQLdatabase",
+        "z": "",
+        "name": "Article 3 DB",
+        "host": "127.0.0.1",
+        "port": "3306",
+        "db": "Article3DB",
+        "tz": "",
+        "charset": "UTF8"
+    },
+    {
+        "id": "65fbb872.b0f098",
+        "type": "mqtt-broker",
+        "name": "My MQTT Broker",
+        "broker": "",
+        "port": "1883",
+        "clientid": "",
+        "usetls": false,
+        "compatmode": false,
+        "keepalive": "60",
+        "cleansession": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthPayload": "",
+        "closeTopic": "",
+        "closeQos": "0",
+        "closePayload": "",
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": ""
+    },
+    {
+        "id": "f8525f7c.b8ec7",
+        "type": "twilio-api",
+        "z": "",
+        "name": "Twilio API",
+        "sid": "",
+        "from": ""
+    }
+]
